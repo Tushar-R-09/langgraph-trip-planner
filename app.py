@@ -1,5 +1,7 @@
 import streamlit as st
 from workflow import app
+from helper_func import clean_itinerary, clean_weather
+
 
 st.set_page_config(page_title="Travel Planner AI", page_icon="🌍", layout="wide")
 
@@ -29,12 +31,13 @@ if submitted:
         }
         try:
             result = app.invoke({"preferences": preferences})
-            itinerary = result.get("itinerary", "No itinerary generated.")
-            weather = result.get("weather", "No weather data available.")
+            itinerary = clean_itinerary(result.get("itinerary", "No itinerary generated."))
+            weather = clean_weather(result.get("weather", "No weather data available."))
 
             # --- Output Display ---
             st.subheader("📅 Itinerary")
-            st.write(itinerary)
+            st.markdown(itinerary)
+
 
             st.subheader("🌦️ Weather Forecast")
             st.write(weather)

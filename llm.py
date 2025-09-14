@@ -13,7 +13,26 @@ model = AutoModelForCausalLM.from_pretrained(
 
 # Chat-style formatting for TinyLlama
 def format_chat_prompt(user_prompt: str) -> str:
-    return f"<|system|>\nYou are a helpful travel planning assistant.\n<|user|>\n{user_prompt}\n<|assistant|>"
+    return f"""<|system|>
+            You are a helpful travel planning assistant.
+
+            Return the itinerary in **Markdown format only** like this:
+
+            ### Day 1
+            - Morning: ...
+            - Afternoon: ...
+            - Evening: ...
+            💰 Total cost: $...
+
+            ### Day 2
+            - Morning: ...
+            - Afternoon: ...
+            - Evening: ...
+            💰 Total cost: $...
+
+            {user_prompt}
+            <|assistant|>"""
+
 
 # Create text-generation pipeline
 llm_pipeline = pipeline(
@@ -28,7 +47,7 @@ llm_pipeline = pipeline(
 )
 
 def llm(prompt: str) -> str:
-    """Generate text using TinyLlama with proper chat formatting."""
+    """Generate JSON itinerary using TinyLlama with strict chat formatting."""
     chat_prompt = format_chat_prompt(prompt)
     outputs = llm_pipeline(chat_prompt, return_full_text=False)
     return outputs[0]["generated_text"].strip()
