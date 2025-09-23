@@ -29,15 +29,36 @@ def gather_preferences(state: TravelPlanState):
 
 # Step 2: Fetch destination info
 def fetch_destination_info(state: TravelPlanState):
-    query = (
-        f"Top attractions and activities in {state['preferences']['destination']} "
-        f"for {state['preferences']['interests']}"
-    )
-    info = tavily.search(query=query, max_results=2)
+    dest = state["preferences"].get("destination", "")
+    interests = state["preferences"].get("interests", "")
+    if not dest:
+        return {"destination_info": "Destination not specified."}
 
-    # Merge results into a short paragraph
-    combined_info = " ".join(result["content"] for result in info.get("results", []))
-    return {"destination_info": combined_info[:500]}  # limit size
+    query = f"Top attractions and activities in {dest} for {interests}"
+    info = tavily.search(query=query, max_results=3, search_depth="advanced")
+
+    results = info.get("results", [])
+    if not results:
+        return {"destination_info": f"No information found for {dest}."}
+
+    # Merge results into a paragraph, respecting sentence boundaries
+    snippets = []
+    for result in results:
+        content = result.get("content", "")
+        if content:
+            snippets.append(content.strip())
+
+    combined_info = " ".join(snippets)
+    # Optional: you could truncate by sentences rather than characters
+    if len(combined_info) > 500:
+        combined_info = combined_info[:500]
+        # Optionally avoid cutting mid-word
+        last_space = combined_info.rfind(" ")
+        if last_space != -1:
+            combined_info = combined_info[:last_space] + "…"
+
+    return {"destination_info": combined_info}
+
 
 
 # Step 3: Generate itinerary with LLM
